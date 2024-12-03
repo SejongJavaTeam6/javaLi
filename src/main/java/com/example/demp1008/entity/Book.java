@@ -25,6 +25,4 @@ public class Book {
     @OneToMany(mappedBy = "book")
     private List<Loan> loans;
 
-
-
 }

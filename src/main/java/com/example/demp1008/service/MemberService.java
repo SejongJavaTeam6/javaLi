@@ -1,11 +1,9 @@
 package com.example.demp1008.service;
 
-import com.example.demp1008.entity.Loan;
 import com.example.demp1008.entity.Member;
 import com.example.demp1008.repository.MemberRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -16,6 +14,7 @@ public class MemberService {
     //멤버생성
     public Member createMember(Member member){
         if(!memberRepository.existsByEmail(member.getEmail())){
+            member.setBorrowedCnt(0);
 
             memberRepository.save(member);
         }
@@ -36,11 +35,6 @@ public class MemberService {
         return member;
     }
 
-    // 회원별 대출 목록 추가
-    public List<Loan> getMemberLoans(String email) {
-        Member member = memberRepository.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("Member not found"));
-        return member.getLoans();
-    }
+
 
 }

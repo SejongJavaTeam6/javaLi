@@ -1,19 +1,18 @@
-package com.example.demp1008.GUI;
+package com.example.demp1008.gui;
 
 import com.example.demp1008.Demp1008Application;
 import com.example.demp1008.entity.Book;
 import com.example.demp1008.entity.Loan;
 import com.example.demp1008.entity.Member;
 import com.example.demp1008.service.BookService;
+import com.example.demp1008.service.LoanService;
 import com.example.demp1008.service.MemberService;
 import org.springframework.boot.SpringApplication;
 import org.springframework.context.ApplicationContext;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
-import javax.swing.table.TableCellRenderer;
 import java.awt.*;
-import java.awt.event.*;
 import java.util.List;
 
 
@@ -257,7 +256,7 @@ public class LibraryGUI extends JFrame {
         DefaultTableModel model = new DefaultTableModel(columns, 0);
         JTable table = new JTable(model);
 
-        List<Loan> loans = memberService.getMemberLoans(currentMember.getEmail());
+        List<Loan> loans = loanService.getMemberLoans(currentMember.getEmail());
         for (Loan loan : loans) {
             model.addRow(new Object[]{
                     loan.getBook().getTitle(),

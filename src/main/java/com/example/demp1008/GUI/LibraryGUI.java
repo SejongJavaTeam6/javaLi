@@ -91,19 +91,19 @@ public class LibraryGUI extends JFrame {
 
                 // ID 컬럼(숨김)에서 Book의 ID 가져오기
                 Long bookId = (Long) table.getValueAt(row, 0);
-                boolean isAvailable = "가능".equals(table.getValueAt(row, 4));
+                boolean isAvailable = "available".equals(table.getValueAt(row, 4));
 
                 if (isAvailable && currentMember != null) {
                     try {
                         // 기존 bookService.borrowBook() 메서드 사용
                         bookService.borrowBook(currentMember.getId(), bookId);
-                        JOptionPane.showMessageDialog(gui, "대출 성공!");
+                        JOptionPane.showMessageDialog(gui, "Loan Success!");
                         gui.refreshBookTable();
                     } catch (Exception ex) {
-                        JOptionPane.showMessageDialog(gui, "대출 실패: " + ex.getMessage());
+                        JOptionPane.showMessageDialog(gui, "Loan Fail: " + ex.getMessage());
                     }
                 } else if (currentMember == null) {
-                    JOptionPane.showMessageDialog(gui, "로그인이 필요합니다.");
+                    JOptionPane.showMessageDialog(gui, "Login please.");
                 }
             }
             isPushed = false;
@@ -119,18 +119,18 @@ public class LibraryGUI extends JFrame {
         // 로그인 컴포넌트
         JTextField emailField = new JTextField(20);
         JPasswordField passwordField = new JPasswordField(20);
-        JButton loginButton = new JButton("로그인");
-        JButton registerButton = new JButton("회원가입");
-        JButton addBookButton = new JButton("책 등록");  // 책 등록 버튼 추가
+        JButton loginButton = new JButton("Login");
+        JButton registerButton = new JButton("Sign Up");
+        JButton addBookButton = new JButton("Add Book");  // 책 등록 버튼 추가
 
         // 컴포넌트 배치
         gbc.gridx = 0; gbc.gridy = 0;
-        loginPanel.add(new JLabel("이메일:"), gbc);
+        loginPanel.add(new JLabel("e-mail:"), gbc);
         gbc.gridx = 1;
         loginPanel.add(emailField, gbc);
 
         gbc.gridx = 0; gbc.gridy = 1;
-        loginPanel.add(new JLabel("비밀번호:"), gbc);
+        loginPanel.add(new JLabel("password:"), gbc);
         gbc.gridx = 1;
         loginPanel.add(passwordField, gbc);
 
@@ -151,7 +151,7 @@ public class LibraryGUI extends JFrame {
                 cardLayout.show(mainPanel, "main");
                 refreshBookTable();
             } catch (Exception ex) {
-                JOptionPane.showMessageDialog(this, "로그인 실패: " + ex.getMessage());
+                JOptionPane.showMessageDialog(this, "login fail: " + ex.getMessage());
             }
         });
 
@@ -176,14 +176,14 @@ public class LibraryGUI extends JFrame {
 
         // 컴포넌트 배치
         int gridy = 0;
-        addFormField(registerPanel, "이름:", nameField, gbc, gridy++);
-        addFormField(registerPanel, "이메일:", emailField, gbc, gridy++);
-        addFormField(registerPanel, "비밀번호:", passwordField, gbc, gridy++);
-        addFormField(registerPanel, "전화번호:", phoneField, gbc, gridy++);
-        addFormField(registerPanel, "나이:", ageField, gbc, gridy++);
+        addFormField(registerPanel, "name:", nameField, gbc, gridy++);
+        addFormField(registerPanel, "e-mail:", emailField, gbc, gridy++);
+        addFormField(registerPanel, "password:", passwordField, gbc, gridy++);
+        addFormField(registerPanel, "phone number:", phoneField, gbc, gridy++);
+        addFormField(registerPanel, "age:", ageField, gbc, gridy++);
 
-        JButton submitButton = new JButton("가입하기");
-        JButton backButton = new JButton("뒤로가기");
+        JButton submitButton = new JButton("sign up");
+        JButton backButton = new JButton("go back");
 
         JPanel buttonPanel = new JPanel(new FlowLayout());
         buttonPanel.add(submitButton);
@@ -203,10 +203,10 @@ public class LibraryGUI extends JFrame {
             try {
                 member.setAge(Integer.parseInt(ageField.getText()));
                 memberService.createMember(member);
-                JOptionPane.showMessageDialog(this, "회원가입 성공!");
+                JOptionPane.showMessageDialog(this, "sign up success!");
                 cardLayout.show(mainPanel, "login");
             } catch (Exception ex) {
-                JOptionPane.showMessageDialog(this, "회원가입 실패: " + ex.getMessage());
+                JOptionPane.showMessageDialog(this, "sign up fail: " + ex.getMessage());
             }
         });
 
@@ -220,10 +220,10 @@ public class LibraryGUI extends JFrame {
 
         // 상단 메뉴 패널
         JPanel menuPanel = new JPanel(new FlowLayout());
-        JButton searchButton = new JButton("책 검색");
-        JButton addBookButton = new JButton("책 등록");
-        JButton myLoansButton = new JButton("내 대출 목록");
-        JButton logoutButton = new JButton("로그아웃");
+        JButton searchButton = new JButton("search book");
+        JButton addBookButton = new JButton("Add book");
+        JButton myLoansButton = new JButton("my loan list");
+        JButton logoutButton = new JButton("log out");
 
         menuPanel.add(searchButton);
         menuPanel.add(addBookButton);
@@ -231,7 +231,7 @@ public class LibraryGUI extends JFrame {
         menuPanel.add(logoutButton);
 
         // 중앙 테이블 패널
-        String[] columns = {"ID", "제목", "출판사", "도서번호", "대출가능", "대출처리"};
+        String[] columns = {"ID", "Title", "publisher", "book_num", "Loan Ok or Not", "Loan"};
         DefaultTableModel bookTableModel = new DefaultTableModel(columns, 0) {
             @Override
             public boolean isCellEditable(int row, int column) {
@@ -256,7 +256,7 @@ public class LibraryGUI extends JFrame {
 
         // 이벤트 처리
         searchButton.addActionListener(e -> {
-            String keyword = JOptionPane.showInputDialog("검색어를 입력하세요:");
+            String keyword = JOptionPane.showInputDialog("search :");
             if (keyword != null && !keyword.trim().isEmpty()) {
                 searchBooks(keyword, bookTableModel);
             }
@@ -284,7 +284,7 @@ public class LibraryGUI extends JFrame {
     }
 
     private void showAddBookDialog() {
-        JDialog dialog = new JDialog(this, "새 책 등록", true);
+        JDialog dialog = new JDialog(this, "Add new book", true);
         JPanel dialogPanel = new JPanel(new GridBagLayout());
         dialog.setLayout(new GridBagLayout());
         GridBagConstraints gbc = new GridBagConstraints();
@@ -294,11 +294,11 @@ public class LibraryGUI extends JFrame {
         JTextField publisherField = new JTextField(20);
         JTextField bookNumberField = new JTextField(20);
 
-        addFormField(dialogPanel, "제목:", titleField, gbc, 0);
-        addFormField(dialogPanel, "출판사:", publisherField, gbc, 1);
-        addFormField(dialogPanel, "도서번호:", bookNumberField, gbc, 2);
+        addFormField(dialogPanel, "Title:", titleField, gbc, 0);
+        addFormField(dialogPanel, "Publisher:", publisherField, gbc, 1);
+        addFormField(dialogPanel, "Book_Num:", bookNumberField, gbc, 2);
 
-        JButton submitButton = new JButton("등록");
+        JButton submitButton = new JButton("Add");
         submitButton.addActionListener(e -> {
             Book book = new Book();
             book.setTitle(titleField.getText());
@@ -310,11 +310,11 @@ public class LibraryGUI extends JFrame {
 
             try {
                 bookService.createBook(book);
-                JOptionPane.showMessageDialog(dialog, "책 등록 성공!");
+                JOptionPane.showMessageDialog(dialog, "Add Success!");
                 dialog.dispose();
                 refreshBookTable();
             } catch (Exception ex) {
-                JOptionPane.showMessageDialog(dialog, "책 등록 실패: " + ex.getMessage());
+                JOptionPane.showMessageDialog(dialog, "Add Fail: " + ex.getMessage());
             }
         });
 
@@ -331,10 +331,10 @@ public class LibraryGUI extends JFrame {
     private void showLoansDialog() {
         if (currentMember == null) return;
 
-        JDialog dialog = new JDialog(this, "내 대출 목록", true);
+        JDialog dialog = new JDialog(this, "My Loan List", true);
         dialog.setLayout(new BorderLayout());
 
-        String[] columns = {"책 제목", "대출일", "반납예정일", "상태"};
+        String[] columns = {"Title", "Loan date", "return date", "state"};
         DefaultTableModel model = new DefaultTableModel(columns, 0);
         JTable table = new JTable(model);
 
@@ -344,7 +344,7 @@ public class LibraryGUI extends JFrame {
                     loan.getBook().getTitle(),
                     loan.getLoanDate(),
                     loan.getReturnDate(),
-                    loan.getOverdueDays() > 0 ? "연체 " + loan.getOverdueDays() + "일" : "정상"
+                    loan.getOverdueDays() > 0 ? "late " + loan.getOverdueDays() + "day" : "normal"
             });
         }
 
@@ -363,8 +363,8 @@ public class LibraryGUI extends JFrame {
                     book.getBookNumber(),   // 도서번호
                     book.getTitle(),        // 제목
                     book.getPublisher(),    // 출판사
-                    book.isAvailable() ? "가능" : "불가능",  // 대출가능 여부
-                    book.isAvailable() ? "대출하기" : "-"    // 대출처리 버튼
+                    book.isAvailable() ? "available" : "not available",  // 대출가능 여부
+                    book.isAvailable() ? "borrow" : "-"    // 대출처리 버튼
             });
         }
     }

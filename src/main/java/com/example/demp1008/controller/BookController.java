@@ -1,6 +1,7 @@
 package com.example.demp1008.controller;
 
 import com.example.demp1008.entity.Book;
+import com.example.demp1008.entity.Loan;
 import com.example.demp1008.service.BookService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;

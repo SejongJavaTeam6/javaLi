@@ -31,5 +31,4 @@ public class MemberController {
     public List<Loan> getMemberLoans(@RequestParam String email) {
         return memberService.getMemberLoans(email);
     }
-
 }

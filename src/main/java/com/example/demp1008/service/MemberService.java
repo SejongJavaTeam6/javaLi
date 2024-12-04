@@ -2,15 +2,19 @@ package com.example.demp1008.service;
 
 import com.example.demp1008.entity.Loan;
 import com.example.demp1008.entity.Member;
+import com.example.demp1008.repository.LoanRepository;
 import com.example.demp1008.repository.MemberRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import java.util.List;
 
 @Service
 @RequiredArgsConstructor
 public class MemberService {
     private final MemberRepository memberRepository;
+    private final LoanRepository loanRepository;
 
 
     //멤버생성
@@ -37,10 +41,11 @@ public class MemberService {
     }
 
     // 회원별 대출 목록 추가
+    @Transactional(readOnly = true)
     public List<Loan> getMemberLoans(String email) {
         Member member = memberRepository.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("Member not found"));
-        return member.getLoans();
+        return loanRepository.findByMemberId(member.getId());
     }
 
 }

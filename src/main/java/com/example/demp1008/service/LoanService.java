@@ -8,6 +8,7 @@ import com.example.demp1008.repository.LoanRepository;
 import com.example.demp1008.repository.MemberRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -19,14 +20,16 @@ public class LoanService {
     private final BookRepository bookRepository;
     private final MemberRepository memberRepository;
 
-    // 회원별 대출 가져오기
+    /// 회원별 대출 가져오기
+    @Transactional(readOnly = true)
     public List<Loan> getMemberLoans(String email) {
         Member member = memberRepository.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("Member not found"));
-        return member.getLoans();
+        return loanRepository.findByMemberId(member.getId());
     }
     // 책 대출 메서드 추가
-    public Loan borrowBook(String email, String bookNumber) {
+    @Transactional
+    public Loan borrowBook(String email, String bookNumber)  {
         Book book = bookRepository.findByBookNumber(bookNumber)
                 .orElseThrow(() -> new RuntimeException("Book not found"));
 

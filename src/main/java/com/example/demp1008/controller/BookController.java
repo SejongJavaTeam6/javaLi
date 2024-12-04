@@ -24,17 +24,5 @@ public class BookController {
 
         return bookService.findAllBooks();
     }
-//
-//    //로그인 후 책 검색용으로 추가
-//    @GetMapping("/search")
-//    public List<Book> searchBooks(@RequestParam String keyword) {
-//        return bookService.searchBooks(keyword);
-//    }
-
-    // 도서 대출 추가
-    @PostMapping("/borrow")
-    public Loan borrowBook(@RequestParam Long memberId, @RequestParam Long bookId) {
-        return bookService.borrowBook(memberId, bookId);
-    }
 
 }

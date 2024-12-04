@@ -25,8 +25,4 @@ public class MemberController {
     public Member login(@RequestParam String email, @RequestParam String password) {
         return memberService.login(email, password);
     }
-
-
-
-
 }

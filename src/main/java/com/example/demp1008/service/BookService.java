@@ -34,19 +34,9 @@ public class BookService {
 
     }
 
-//    // 책 검색 추가
-//    public List<Book> searchBooks(String keyword) {
-//        if (keyword == null || keyword.trim().isEmpty()) {
-//            return Collections.emptyList();
-//        }
-//        return bookRepository.findByTitleContaining(keyword.trim());
-//    }
-
     //제목으로 찾는 거 추가
     public Optional<Book> findByTitle(String title) {
         return bookRepository.findByTitle(title);
     }
-
-
 
 }

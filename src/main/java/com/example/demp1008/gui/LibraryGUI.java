@@ -46,6 +46,70 @@ public class LibraryGUI extends JFrame {
         add(mainPanel);
     }
 
+    public class ButtonRenderer extends JButton implements TableCellRenderer {
+        public ButtonRenderer() {
+            setOpaque(true);
+        }
+
+        @Override
+        public Component getTableCellRendererComponent(JTable table, Object value,
+                                                       boolean isSelected, boolean hasFocus, int row, int column) {
+            setText(value != null ? value.toString() : "");
+            return this;
+        }
+    }
+
+    public class ButtonEditor extends DefaultCellEditor {
+        protected JButton button;
+        private String label;
+        private boolean isPushed;
+        private final LibraryGUI gui;
+
+        public ButtonEditor(JCheckBox checkBox, LibraryGUI gui) {
+            super(checkBox);
+            this.gui = gui;
+            button = new JButton();
+            button.setOpaque(true);
+            button.addActionListener(e -> fireEditingStopped());
+        }
+
+        @Override
+        public Component getTableCellEditorComponent(JTable table, Object value,
+                                                     boolean isSelected, int row, int column) {
+            label = (value != null ? value.toString() : "");
+            button.setText(label);
+            isPushed = true;
+            return button;
+        }
+
+        @Override
+        public Object getCellEditorValue() {
+            if (isPushed) {
+                JTable table = gui.getBookTable();
+                int row = table.getSelectedRow();
+
+                // ID 컬럼(숨김)에서 Book의 ID 가져오기
+                Long bookId = (Long) table.getValueAt(row, 0);
+                boolean isAvailable = "가능".equals(table.getValueAt(row, 4));
+
+                if (isAvailable && currentMember != null) {
+                    try {
+                        // 기존 bookService.borrowBook() 메서드 사용
+                        bookService.borrowBook(currentMember.getId(), bookId);
+                        JOptionPane.showMessageDialog(gui, "대출 성공!");
+                        gui.refreshBookTable();
+                    } catch (Exception ex) {
+                        JOptionPane.showMessageDialog(gui, "대출 실패: " + ex.getMessage());
+                    }
+                } else if (currentMember == null) {
+                    JOptionPane.showMessageDialog(gui, "로그인이 필요합니다.");
+                }
+            }
+            isPushed = false;
+            return label;
+        }
+    }
+
     private void initLoginPanel() {
         JPanel loginPanel = new JPanel(new GridBagLayout());
         GridBagConstraints gbc = new GridBagConstraints();
@@ -166,9 +230,24 @@ public class LibraryGUI extends JFrame {
         menuPanel.add(logoutButton);
 
         // 중앙 테이블 패널
-        String[] columns = {"제목", "출판사", "대출가능", "액션"};
-        DefaultTableModel bookTableModel = new DefaultTableModel(columns, 0);
+        String[] columns = {"ID", "제목", "출판사", "도서번호", "대출가능", "대출처리"};
+        DefaultTableModel bookTableModel = new DefaultTableModel(columns, 0) {
+            @Override
+            public boolean isCellEditable(int row, int column) {
+                return column == 5; // 대출처리 버튼 컬럼만 편집 가능
+            }
+        };
         JTable bookTable = new JTable(bookTableModel);
+
+        // ID 컬럼 숨기기
+        bookTable.getColumnModel().getColumn(0).setMinWidth(0);
+        bookTable.getColumnModel().getColumn(0).setMaxWidth(0);
+        bookTable.getColumnModel().getColumn(0).setWidth(0);
+
+        // 버튼 컬럼 설정
+        bookTable.getColumnModel().getColumn(5).setCellRenderer(new ButtonRenderer());
+        bookTable.getColumnModel().getColumn(5).setCellEditor(new ButtonEditor(new JCheckBox(), this));
+
         JScrollPane scrollPane = new JScrollPane(bookTable);
 
         mainMenuPanel.add(menuPanel, BorderLayout.NORTH);
@@ -225,6 +304,8 @@ public class LibraryGUI extends JFrame {
             book.setPublisher(publisherField.getText());
             book.setBookNumber(bookNumberField.getText());
             book.setAvailable(true);
+            book.setLoanCnt(0);
+            book.setPageCnt(0);
 
             try {
                 bookService.createBook(book);
@@ -277,10 +358,12 @@ public class LibraryGUI extends JFrame {
         List<Book> books = bookService.searchBooks(keyword);
         for (Book book : books) {
             model.addRow(new Object[]{
-                    book.getTitle(),
-                    book.getPublisher(),
-                    book.isAvailable() ? "가능" : "불가능",
-                    book.isAvailable() ? "대출" : "-"
+                    book.getId(),           // ID (숨김)
+                    book.getBookNumber(),   // 도서번호
+                    book.getTitle(),        // 제목
+                    book.getPublisher(),    // 출판사
+                    book.isAvailable() ? "가능" : "불가능",  // 대출가능 여부
+                    book.isAvailable() ? "대출하기" : "-"    // 대출처리 버튼
             });
         }
     }

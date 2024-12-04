@@ -30,4 +30,10 @@ public class BookController {
         return bookService.searchBooks(keyword);
     }
 
+    // 도서 대출 추가
+    @PostMapping("/borrow")
+    public Loan borrowBook(@RequestParam Long memberId, @RequestParam Long bookId) {
+        return bookService.borrowBook(memberId, bookId);
+    }
+
 }

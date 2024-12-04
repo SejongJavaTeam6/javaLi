@@ -52,6 +52,7 @@ public class BookService {
     }
 
     // 책 대출 메서드 추가
+    @Transactional
     public Loan borrowBook(Long memberId, Long bookId) {
         Book book = bookRepository.findById(bookId)
                 .orElseThrow(() -> new RuntimeException("Book not found"));

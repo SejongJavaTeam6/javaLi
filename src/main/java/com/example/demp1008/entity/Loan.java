@@ -5,6 +5,7 @@ import lombok.Getter;
 import lombok.Setter;
 
 import java.time.LocalDate;
+import java.time.temporal.ChronoUnit;
 
 @Entity
 @Getter
@@ -28,8 +29,25 @@ public class Loan {
     private LocalDate loanDate;
 
     // 반납 예정일 (반납되지 않았다면 null)
-    private LocalDate returnDate;
+    private LocalDate scheduledReturnDate;
+
+    // 실제 반납 날짜 (반납되지 않았다면 null)
+    private LocalDate actualReturnDate;
+
+    // 반납 여부
+    private boolean returned;
+
     //연체일
     private int overdueDays;
+
+    public long getOverdueDays() {
+        if (!returned && scheduledReturnDate != null) {
+            LocalDate today = LocalDate.now();
+            if (today.isAfter(scheduledReturnDate)) {
+                return ChronoUnit.DAYS.between(scheduledReturnDate, today);
+            }
+        }
+        return 0;
+    }
 
 }

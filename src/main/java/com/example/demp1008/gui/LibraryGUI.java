@@ -17,7 +17,6 @@ import java.awt.*;
 import java.util.List;
 import java.util.Optional;
 
-
 public class LibraryGUI extends JFrame {
     private CardLayout cardLayout;
     private JPanel mainPanel;
@@ -27,10 +26,15 @@ public class LibraryGUI extends JFrame {
     private final BookService bookService;
     private final LoanService loanService;
     private JTable bookTable;
-    private JButton addBookButtonMain;
+    private JTable loansTable;
+    private JDialog loansDialog;
+
 
     // 현재 로그인한 회원 정보
     private Member currentMember;
+
+    // "도서 추가" 버튼을 클래스 필드로 선언
+    private JButton addBookButtonMain;
 
     public LibraryGUI(MemberService memberService, BookService bookService, LoanService loanService) {
         this.memberService = memberService;
@@ -47,12 +51,14 @@ public class LibraryGUI extends JFrame {
 
         initLoginPanel();           // 로그인 패널
         initRegisterPanel();        // 회원가입 패널
-        initMainPanel();           // 메인 패널 (로그인 후)
+        initMainPanel();            // 메인 패널 (로그인 후)
 
         add(mainPanel);
     }
 
-    // 대출 버튼
+    /**
+     * 도서 대출 버튼 렌더러
+     */
     public class ButtonRenderer extends JButton implements TableCellRenderer {
         public ButtonRenderer() {
             setOpaque(true);
@@ -66,6 +72,9 @@ public class LibraryGUI extends JFrame {
         }
     }
 
+    /**
+     * 도서 대출 버튼 에디터
+     */
     public class ButtonEditor extends DefaultCellEditor {
         protected JButton button;
         private String label;
@@ -120,7 +129,6 @@ public class LibraryGUI extends JFrame {
             isPushed = false;
             return label;
         }
-
     }
 
     /**
@@ -139,15 +147,22 @@ public class LibraryGUI extends JFrame {
         // JButton addBookButton = new JButton("도서 추가");  // 책 등록 버튼 제거
 
         // 컴포넌트 배치
-        gbc.gridx = 0; gbc.gridy = 0;
+        gbc.gridx = 0;
+        gbc.gridy = 0;
         gbc.anchor = GridBagConstraints.EAST;
         loginPanel.add(new JLabel("이메일:"), gbc);
-        gbc.gridx = 1; gbc.anchor = GridBagConstraints.WEST;
+
+        gbc.gridx = 1;
+        gbc.anchor = GridBagConstraints.WEST;
         loginPanel.add(emailField, gbc);
 
-        gbc.gridx = 0; gbc.gridy = 1; gbc.anchor = GridBagConstraints.EAST;
+        gbc.gridx = 0;
+        gbc.gridy = 1;
+        gbc.anchor = GridBagConstraints.EAST;
         loginPanel.add(new JLabel("비밀번호:"), gbc);
-        gbc.gridx = 1; gbc.anchor = GridBagConstraints.WEST;
+
+        gbc.gridx = 1;
+        gbc.anchor = GridBagConstraints.WEST;
         loginPanel.add(passwordField, gbc);
 
         JPanel buttonPanel = new JPanel(new FlowLayout());
@@ -155,7 +170,8 @@ public class LibraryGUI extends JFrame {
         buttonPanel.add(registerButton);
         // buttonPanel.add(addBookButton);  // 버튼 패널에서 제거
 
-        gbc.gridx = 0; gbc.gridy = 2;
+        gbc.gridx = 0;
+        gbc.gridy = 2;
         gbc.gridwidth = 2;
         loginPanel.add(buttonPanel, gbc);
 
@@ -185,7 +201,6 @@ public class LibraryGUI extends JFrame {
 
         mainPanel.add(loginPanel, "login");
     }
-
 
     /**
      * 회원가입 패널 초기화
@@ -217,7 +232,8 @@ public class LibraryGUI extends JFrame {
         buttonPanel.add(submitButton);
         buttonPanel.add(backButton);
 
-        gbc.gridx = 0; gbc.gridy = gridy;
+        gbc.gridx = 0;
+        gbc.gridy = gridy;
         gbc.gridwidth = 2;
         registerPanel.add(buttonPanel, gbc);
 
@@ -319,7 +335,8 @@ public class LibraryGUI extends JFrame {
      */
     private void addFormField(JPanel panel, String label, JComponent field,
                               GridBagConstraints gbc, int y) {
-        gbc.gridx = 0; gbc.gridy = y;
+        gbc.gridx = 0;
+        gbc.gridy = y;
         gbc.gridwidth = 1;
         gbc.anchor = GridBagConstraints.EAST;
         panel.add(new JLabel(label), gbc);
@@ -328,7 +345,9 @@ public class LibraryGUI extends JFrame {
         panel.add(field, gbc);
     }
 
-
+    /**
+     * 도서 추가 다이얼로그 표시
+     */
     private void showAddBookDialog() {
         JDialog dialog = new JDialog(this, "새 도서 추가", true);
         JPanel dialogPanel = new JPanel(new GridBagLayout());
@@ -353,7 +372,8 @@ public class LibraryGUI extends JFrame {
         buttonPanel.add(submitButton);
         buttonPanel.add(cancelButton);
 
-        gbc.gridx = 0; gbc.gridy = 4;
+        gbc.gridx = 0;
+        gbc.gridy = 4;
         gbc.gridwidth = 2;
         dialogPanel.add(buttonPanel, gbc);
 
@@ -391,16 +411,33 @@ public class LibraryGUI extends JFrame {
      */
     private void showLoansDialog() {
         if (currentMember == null) {
-            JOptionPane.showMessageDialog(this, "로그인이 필요합니다.");
+            JOptionPane.showMessageDialog(this, "do login");
             return;
         }
 
-        JDialog dialog = new JDialog(this, "내 대출 목록", true);
-        dialog.setLayout(new BorderLayout());
+        JDialog dialog = new JDialog(this, "my loan list", true);
+        //dialog.setLayout(new BorderLayout());
+        this.loansDialog = dialog;
 
-        String[] columns = {"제목", "대출 날짜", "반납 예정일", "상태"};
-        DefaultTableModel model = new DefaultTableModel(columns, 0);
-        JTable table = new JTable(model);
+        String[] columns = {"제목", "대출 날짜", "반납 예정일", "상태", "Loan ID", "반납"};
+        DefaultTableModel model = new DefaultTableModel(columns, 0) {
+            @Override
+            public boolean isCellEditable(int row, int column) {
+                return column == 5; // "반납" 버튼 컬럼만 편집 가능
+            }
+        };
+        loansTable = new JTable(model); // 여기서 loansTable 필드에 직접 대입
+
+        // Loan ID 컬럼 숨기기
+        loansTable.getColumnModel().getColumn(4).setMinWidth(0);
+        loansTable.getColumnModel().getColumn(4).setMaxWidth(0);
+        loansTable.getColumnModel().getColumn(4).setWidth(0);
+
+        loansTable.getColumnModel().getColumn(5).setCellRenderer(new ReturnButtonRenderer());
+        loansTable.getColumnModel().getColumn(5).setCellEditor(new ReturnButtonEditor(new JCheckBox(), this));
+
+        JScrollPane scrollPane = new JScrollPane(loansTable);
+        dialog.add(scrollPane, BorderLayout.CENTER);
 
         try {
             List<Loan> loans = loanService.getMemberLoans(currentMember.getEmail());
@@ -408,19 +445,26 @@ public class LibraryGUI extends JFrame {
                 model.addRow(new Object[]{
                         loan.getBook().getTitle(),
                         loan.getLoanDate(),
-                        loan.getReturnDate(),
-                        loan.getOverdueDays() > 0 ? "연체 " + loan.getOverdueDays() + "일" : "정상"
+                        loan.getScheduledReturnDate(),
+                        loan.getOverdueDays() > 0 ? "연체 " + loan.getOverdueDays() + "일" : "정상",
+                        loan.getId(),
+                        "Return"
                 });
             }
         } catch (Exception e) {
             JOptionPane.showMessageDialog(this, "대출 목록을 불러오는 데 실패했습니다: " + e.getMessage());
         }
 
-        dialog.add(new JScrollPane(table), BorderLayout.CENTER);
-        dialog.setSize(600, 400);
+        dialog.setSize(700, 400);
         dialog.setLocationRelativeTo(this);
         dialog.setVisible(true);
     }
+
+    // loansTable을 반환하는 메서드
+    private JTable getLoansTable() {
+        return loansTable;
+    }
+
 
     /**
      * 도서 검색 기능 구현
@@ -430,31 +474,12 @@ public class LibraryGUI extends JFrame {
      */
     private void searchBooks(String keyword, DefaultTableModel model) {
         model.setRowCount(0);
-        Optional<Book> optionalBook = bookService.findByTitle(keyword.trim());
-        if (optionalBook.isPresent()) {
-            Book book = optionalBook.get();
-            model.addRow(new Object[]{
-                    book.getId(),                   // ID (숨김)
-                    book.getBookNumber(),           // 도서번호
-                    book.getTitle(),                // 제목
-                    book.getPublisher(),            // 출판사
-                    book.isAvailable() ? "available" : "not available",  // 대출가능 여부
-                    book.isAvailable() ? "Borrow" : "-"    // 대출처리 버튼
-            });
-        } else {
-            JOptionPane.showMessageDialog(this, "해당 제목의 도서를 찾을 수 없습니다.");
-        }
-    }
-
-    /**
-     * 도서 테이블 갱신
-     */
-    private void refreshBookTable() {
-        JTable table = getBookTable();
-        if (table != null) {
-            DefaultTableModel model = (DefaultTableModel) table.getModel();
-            model.setRowCount(0); // 기존 데이터 초기화
-            List<Book> books = bookService.findAllBooks();
+        try {
+            List<Book> books = bookService.findByTitleContaining(keyword);
+            if (books.isEmpty()) {
+                JOptionPane.showMessageDialog(this, "해당 키워드를 포함하는 도서를 찾을 수 없습니다.");
+                return;
+            }
             for (Book book : books) {
                 model.addRow(new Object[]{
                         book.getId(),                   // ID (숨김)
@@ -464,6 +489,33 @@ public class LibraryGUI extends JFrame {
                         book.isAvailable() ? "available" : "not available",  // 대출가능 여부
                         book.isAvailable() ? "Borrow" : "-"    // 대출처리 버튼
                 });
+            }
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(this, "도서 검색 중 오류가 발생했습니다: " + e.getMessage());
+        }
+    }
+
+    /**
+     * 도서 테이블 갱신
+     */
+    private void refreshBookTable() {
+        if (bookTable != null) {
+            DefaultTableModel model = (DefaultTableModel) bookTable.getModel();
+            model.setRowCount(0); // 기존 데이터 초기화
+            try {
+                List<Book> books = bookService.findAllBooks();
+                for (Book book : books) {
+                    model.addRow(new Object[]{
+                            book.getId(),                   // ID (숨김)
+                            book.getBookNumber(),           // 도서번호
+                            book.getTitle(),                // 제목
+                            book.getPublisher(),            // 출판사
+                            book.isAvailable() ? "available" : "not available",  // 대출가능 여부
+                            book.isAvailable() ? "Borrow" : "-"    // 대출처리 버튼
+                    });
+                }
+            } catch (Exception e) {
+                JOptionPane.showMessageDialog(this, "도서 목록을 불러오는 데 실패했습니다: " + e.getMessage());
             }
         }
     }
@@ -478,10 +530,82 @@ public class LibraryGUI extends JFrame {
     }
 
     /**
+     * 도서 반납 버튼 렌더러
+     */
+    public class ReturnButtonRenderer extends JButton implements TableCellRenderer {
+        public ReturnButtonRenderer() {
+            setOpaque(true);
+        }
+
+        @Override
+        public Component getTableCellRendererComponent(JTable table, Object value,
+                                                       boolean isSelected, boolean hasFocus, int row, int column) {
+            setText("Return");
+            return this;
+        }
+    }
+
+    /**
+     * 도서 반납 버튼 에디터
+     */
+    public class ReturnButtonEditor extends DefaultCellEditor {
+        protected JButton button;
+        private boolean isPushed;
+        private final LibraryGUI gui;
+
+        public ReturnButtonEditor(JCheckBox checkBox, LibraryGUI gui) {
+            super(checkBox);
+            this.gui = gui;
+            button = new JButton();
+            button.setOpaque(true);
+            button.addActionListener(e -> fireEditingStopped());
+        }
+
+        @Override
+        public Component getTableCellEditorComponent(JTable table, Object value,
+                                                     boolean isSelected, int row, int column) {
+            button.setText("Return");
+            isPushed = true;
+            return button;
+        }
+
+        @Override
+        public Object getCellEditorValue() {
+            if (isPushed) {
+                JTable loansTable = gui.getLoansTable();
+                int row = loansTable.getSelectedRow();
+
+                if (row >= 0) {
+                    Long loanId = (Long) loansTable.getValueAt(row, 4);
+                    try {
+                        gui.loanService.returnBook(loanId);
+                        JOptionPane.showMessageDialog(gui, "반납 성공!");
+                        gui.refreshBookTable();
+
+                        // 기존 대출 목록 다이얼로그 닫기
+                        if (gui.loansDialog != null) {
+                            gui.loansDialog.dispose();
+                        }
+
+                        // 새로 대출 목록 다이얼로그 열기
+                        gui.showLoansDialog();
+                    } catch (Exception ex) {
+                        JOptionPane.showMessageDialog(gui, "반납 실패: " + ex.getMessage());
+                    }
+                }
+            }
+            isPushed = false;
+            return "Return";
+        }
+
+    }
+
+
+    /**
      * 메인 메서드
      */
     public static void main(String[] args) {
-        ApplicationContext context = SpringApplication.run(com.example.demp1008.Demp1008Application.class);
+        ApplicationContext context = SpringApplication.run(Demp1008Application.class);
         SwingUtilities.invokeLater(() -> {
             MemberService memberService = context.getBean(MemberService.class);
             BookService bookService = context.getBean(BookService.class);

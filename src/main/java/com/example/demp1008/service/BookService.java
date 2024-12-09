@@ -39,4 +39,11 @@ public class BookService {
         return bookRepository.findByTitle(title);
     }
 
+    public List<Book> findByTitleContaining(String keyword) {
+        if (keyword == null || keyword.trim().isEmpty()) {
+            return findAllBooks();
+        }
+        return bookRepository.findByTitleContaining(keyword.trim());
+    }
+
 }

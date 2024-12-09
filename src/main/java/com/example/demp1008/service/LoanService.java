@@ -20,45 +20,75 @@ public class LoanService {
     private final BookRepository bookRepository;
     private final MemberRepository memberRepository;
 
-    /// 회원별 대출 가져오기
+    /**
+     * 회원별 대출 기록 가져오기
+     * @param email 회원 이메일
+     * @return 대출 목록
+     */
     @Transactional(readOnly = true)
     public List<Loan> getMemberLoans(String email) {
         Member member = memberRepository.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("Member not found"));
-        return loanRepository.findByMemberId(member.getId());
+                .orElseThrow(() -> new RuntimeException("회원이 존재하지 않습니다."));
+        return loanRepository.findByMemberIdAndReturnedFalse(member.getId());
     }
     // 책 대출 메서드 추가
     @Transactional
-    public Loan borrowBook(String email, String bookNumber)  {
+    public Loan borrowBook(String email, String bookNumber) {
+        Member member = memberRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("회원이 존재하지 않습니다."));
+
         Book book = bookRepository.findByBookNumber(bookNumber)
-                .orElseThrow(() -> new RuntimeException("Book not found"));
+                .orElseThrow(() -> new RuntimeException("도서가 존재하지 않습니다."));
 
         if (!book.isAvailable()) {
-            throw new RuntimeException("Book is not available");
+            throw new RuntimeException("해당 도서는 현재 대출 불가능 상태입니다.");
         }
 
-        Member member = memberRepository.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("Member not found"));
+        // 대출 기록 생성
+        Loan loan = new Loan();
+        loan.setMember(member);
+        loan.setBook(book);
+        loan.setLoanDate(LocalDate.now());
+        loan.setScheduledReturnDate(LocalDate.now().plusWeeks(2)); // 예: 대출 후 2주 후 반납 예정
+        loan.setReturned(false);
 
-        // 대출 처리
+        // 도서 상태 업데이트
         book.setAvailable(false);
         book.setLoanCnt(book.getLoanCnt() + 1);
 
-        Loan loan = new Loan();
-        loan.setBook(book);
-        loan.setMember(member);
-        loan.setLoanDate(LocalDate.now());
-        loan.setReturnDate(LocalDate.now().plusWeeks(2)); // 2주 대출 기간
-        //7권이상 대출 불가능하게
-        if(member.getBorrowedCnt()+1>7){
-
-            throw new RuntimeException("7권을 초과하셨습니다");
-        }
-        member.setBorrowedCnt(member.getBorrowedCnt() + 1);
-
+        loanRepository.save(loan);
         bookRepository.save(book);
-        memberRepository.save(member);
-        return loanRepository.save(loan);
+
+        return loan;
     }
+
+
+
+    /**
+     * 도서 반납 메서드
+     * @param loanId 반납할 대출 기록의 ID
+     */
+    @Transactional
+    public void returnBook(Long loanId) {
+        Loan loan = loanRepository.findById(loanId)
+                .orElseThrow(() -> new RuntimeException("대출 기록이 존재하지 않습니다."));
+
+        if (loan.isReturned()) {
+            throw new RuntimeException("이미 반납된 도서입니다.");
+        }
+
+        // 반납 처리
+        loan.setReturned(true);
+        loan.setActualReturnDate(LocalDate.now());
+
+        // 도서 상태 업데이트
+        Book book = loan.getBook();
+        book.setAvailable(true);
+
+        loanRepository.save(loan);
+        bookRepository.save(book);
+    }
+
+
 
 }
